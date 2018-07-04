@@ -1,0 +1,26 @@
+{
+  "name": "tiwpr_websocket",
+  "version": "1.0.0",
+  "description": "simple websocket game",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaail/tiwpr_websocket.git"
+  },
+  "keywords": [
+    "websocket"
+  ],
+  "author": "Michal Klos",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/michaail/tiwpr_websocket/issues"
+  },
+  "homepage": "https://github.com/michaail/tiwpr_websocket#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3"
+  }
+}
