@@ -3,7 +3,9 @@
    <head>
       <title>Rysownik</title>
       <meta charset="utf-8">
-    
+      <script src="/socket.io/socket.io.js"></script>
+      
+      
    </head>
    <body>
 
@@ -12,17 +14,17 @@
     <div>
         <input type="text" id="create-value">
         <button id="create">Utwórz</button>
+        
     </div>
 
     <div>
         
-        <select id="join-value">
-            <option value="test">Test</option>
-            <option value="test1">Test1</option>
-        </select>
+        <select id="join-value"></select>
+        
         <button id="join">Dołącz</button>
+        <button id="delete">Usuń</button>
         
     </div>
-      <script src="home.js"></script>
+    <script src="home.js"></script>
    </body>
 </html>
