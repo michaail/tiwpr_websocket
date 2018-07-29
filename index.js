@@ -21,12 +21,15 @@ app.use(express.static(__dirname + '/public'));
 //     console.log("received from front");
 // })
 
-
+var users = [];
 var roomList = [];
+var createdRooms = [];
 
 io.on('connection', (socket) => {
     console.log("Witam");
 
+    users.push(socket.id);
+    console.log(users.length);
     // socket.emit('news', "from server");
 
     socket.on('create-room', (roomName) => {
@@ -47,6 +50,9 @@ io.on('connection', (socket) => {
     socket.on('join-room', (roomName) => {
         if (roomList.includes(roomName))
         {
+            socket.room = roomName;
+            
+            socket.join(roomName);
 
             console.log("Join:\t" + roomName);
         }
@@ -77,6 +83,15 @@ io.on('connection', (socket) => {
 
     socket.on('get-rooms', (msg) => {
         socket.emit('get-rooms', roomList);
+    });
+
+    socket.on('disconnect', () => {
+        var index = users.indexOf(socket.id);
+        if (index > -1) 
+        {
+            users.splice(index, 1);
+            console.log("Delete:\t" + socket.id);
+        }
     });
 });
 

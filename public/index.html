@@ -4,27 +4,46 @@
       <title>Rysownik</title>
       <meta charset="utf-8">
       <script src="/socket.io/socket.io.js"></script>
-      
+      <link rel="stylesheet", href="../game/game.css">
       
    </head>
    <body>
 
-    <h1>Pokoje</h1>
+    <div id="room-controls">
+        <h1>Pokoje</h1>
 
-    <div>
-        <input type="text" id="create-value">
-        <button id="create">Utwórz</button>
+        <div>
+            <input type="text" id="create-value">
+            <button id="create">Utwórz</button>
+        
+        </div>
+
+        <div>
+        
+            <select id="join-value"></select>
+        
+            <button id="join">Dołącz</button>
+            <button id="update">Aktualizuj</button>
+            <button id="delete">Usuń</button>
+        
+        </div>
         
     </div>
 
-    <div>
+    <div id="game-board">
         
-        <select id="join-value"></select>
+        <div class="center-wrapper-parent">
+            <div class="canvas-wrapper">
+                <canvas id="tic-tac-toe-board" class="center-v"></canvas>
+            </div>
+        </div>
+
         
-        <button id="join">Dołącz</button>
-        <button id="delete">Usuń</button>
-        
+        <p>jakiś tekst</p>
     </div>
-    <script src="home.js"></script>
+    
+    <script src="home.js" type="module"></script>
+    <!-- <script src="game.js"></script> -->
+    <!-- <script src="game.js" -->
    </body>
 </html>
