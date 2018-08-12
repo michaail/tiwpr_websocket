@@ -33,9 +33,14 @@ io.on('connection', (socket) => {
     // socket.emit('news', "from server");
 
     socket.on('create-room', (roomName) => {
-        if (!roomList.includes(roomName))
+        if ( roomList.filter( (room) => (room.roomName === roomName) ).length < 1)
         {
-            roomList.push(roomName);
+            let currRoom = {
+                roomName,
+                players: 1,
+                gameState: []
+            };
+            roomList.push(currRoom);
             console.log("Create:\t" + roomName);
         }
         else
@@ -90,7 +95,7 @@ io.on('connection', (socket) => {
         if (index > -1) 
         {
             users.splice(index, 1);
-            console.log("Delete:\t" + socket.id);
+            console.log("Disconnect:\t" + socket.id);
         }
     });
 });

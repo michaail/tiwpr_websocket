@@ -91,7 +91,7 @@ socket.on('get-rooms', (rooms) => {
 
     for (i = 0; i < rooms.length; i++)
     {
-        var room = new Option(rooms[i], i);
+        var room = new Option(rooms[i].roomName, i);
         sSelect.options.add(room);
     }
     console.log(rooms);
@@ -100,8 +100,8 @@ socket.on('get-rooms', (rooms) => {
 var inGame = true; //change to false
 
 
-// GAME per se
 
+// GAME per se
 var lineColor = "#ddd";
 
 var canvas = document.getElementById('tic-tac-toe-board');
@@ -120,7 +120,7 @@ function game(p)
     canvas.height = canvasSize;
     context.translate(0.5, 0.5);
 
-    var board = getInitialBoard(0); // empty board 0 = empty; 1 = X; 2 = O;
+    var board = getInitialBoard(' '); // empty board 0 = empty; 1 = X; 2 = O;
     console.log(board);
 
     drawLines(10, lineColor);
@@ -187,9 +187,9 @@ function addPlayingPiece (mouse, player, board)
     var xCordinate;
     var yCordinate;
 
-    for (var x = 0; x < 3; x++) 
+    for (var y = 0; y < 3; y++) 
     {
-        for (var y = 0; y < 3; y++) 
+        for (var x = 0; x < 3; x++) 
         {
             xCordinate = x * sectionSize;
             yCordinate = y * sectionSize;
@@ -198,21 +198,20 @@ function addPlayingPiece (mouse, player, board)
                 mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) 
             {
                 //clearPlayingArea(xCordinate, yCordinate);
-
-                if (board[x][y] != 0)
+                if (board[y][x] != ' ')
                 {
                     return false;
                 }
 
                 if (player === 1) 
                 {
-                    board[x][y] = 1;
+                    board[y][x] = 'X';
                     console.log(board);
                     drawX(xCordinate, yCordinate);
                 } 
                 else 
                 {
-                    board[x][y] = 2;
+                    board[y][x] = 'O';
                     console.log(board);
                     drawO(xCordinate, yCordinate);
                 }
