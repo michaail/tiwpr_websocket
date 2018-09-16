@@ -16,34 +16,18 @@ function game(playerID) {
   canvas.height = canvaHeight;  
 
   const ima = new Image();
-  const sources = {
-    zero: '../assets/animals_c/0.png',
-    one:  '../assets/animals_c/1.png'
-  };
 
-  // loadImages(sources, (images) => {
-  //   context.drawImage(images.zero, 0,0,150,150);
-  //   context.drawImage(images.one, 150, 150, 150, 150);
-  //   context.drawImage(images.zero, 0,150,150,150);
-  //   context.drawImage(images.one, 150, 0, 150, 150);
-  // });
-  
+  generateBoard();
 
   drawReverse(0);
 
   console.log('game');
-
-  
-  
     
 }
 game();
 
-function pickImages(count) {
 
-}
 
-// when klicked on tile
 function loadImages(sources, callback) {
   const images = {};
   let loadedImages = 0;
@@ -80,17 +64,40 @@ function drawReverse(fileNo) {
 
 
 function generateBoard() {
-  let i = 0;
+  const board = []
+  const sources = getTilesSources().map((item) => {
+    return [item, item];
+  }).reduce((a, b) => {
+    return a.concat(b);
+  });
+
+  shuffleTiles(sources);
+
   for (let x = 0; x < columns; x++) {
+    board.push([]);
     for (let y = 0; y < rows; y++) {
-      const image = new Image();
-      image.onload = () => {
-        context.drawImage(image, x* sectionSize, y*sectionSize, sectionSize, sectionSize);
-      }
-      let url = '../assets/' + i + '.png';
-      i++;
-      image.src = url;
+      board[x].push(sources.pop());
     }
+  }
+  console.log(board);
+}
+
+function getTilesSources() {
+  let sources = [];
+  while (sources.length < tiles / 2) {
+    var randomNumber = Math.floor(Math.random()*100);
+    if(sources.indexOf(randomNumber) > -1) continue;
+    sources.push(randomNumber);
+  }
+  return sources;
+}
+
+function shuffleTiles(tiles) {
+  for(let i= tiles.length - 1; i > 0; i--) {
+    const swap = Math.floor(Math.random()*i);
+    const tmp = tiles[i];
+    tiles[i] = tiles[swap];
+    tiles[swap] = tmp;
   }
 }
 
@@ -115,14 +122,24 @@ function revertTile(mouse)
           mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) 
       {
         console.log(`row: ${y}, column: ${x}`);
-        //clearPlayingArea(xCordinate, yCordinate);
-
+        clearTile(x, y);
         
       }
     }
   }
 }
 
+function clearTile(column, row) {
+  context.beginPath();
+  context.rect( column*sectionSize, row*sectionSize, 
+                sectionSize, sectionSize);
+  context.fillStyle = "white"
+  context.fill();
+}
+
+function showTile(params) {
+  
+}
 
 
  // gets coordinates of mouse click
