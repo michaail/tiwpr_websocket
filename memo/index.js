@@ -19,14 +19,14 @@ function checkRoomList() {
 checkRoomList();
 
 const controls = document.getElementById('room-controls');
-const gameBoard = document.getElementById('game-board');
+const gameContainer = document.getElementById('game-board');
 
-gameBoard.style.display = "none";
+gameContainer.style.display = "none";
 
 function showGameBoard()
 {
   controls.style.display = "none"; // wyłączenie kontroli
-  gameBoard.style.display = "block";
+  gameContainer.style.display = "block";
 }
 
 // Create room button event listener
@@ -35,9 +35,7 @@ bCreate.addEventListener('click', function(e) {
   var createValue = document.getElementById('create-value').value;
     
   socket.emit('create-room', createValue);
-
-  //game(1);
-    
+      
   console.log('create button clicked ' + createValue);
   checkRoomList();
 });
@@ -50,7 +48,7 @@ bJoin.addEventListener('click', function(e) {
     
   socket.emit('join-room', t);
     
-  game(2);
+  // game(2);
 
   console.log('join button clicked ' + t);
     
@@ -83,6 +81,11 @@ sSelect.addEventListener('click', function(e) {
      
 });
 
+
+/*
+ *  ***** CONTROLS COMMUNICATION *****
+ */
+
 // Get room-list from server
 socket.on('get-rooms', (rooms) => {
   for (var i = sSelect.options.length -1; i >= 0; i--)
@@ -95,80 +98,176 @@ socket.on('get-rooms', (rooms) => {
     var room = new Option(rooms[i].roomName, i);
     sSelect.options.add(room);
   }
-  console.log(rooms);
+  //console.log(rooms);
 });
 
 
-/***** GAME *****/
-var rows = 5;
+/*
+ *  ***** GAME COMMUNICATION *****
+ */
+
+socket.on('reverse-tile', (coordinates) => {
+
+});
+
+
+var gameBoard;
+var room;
+socket.on('game-board', (roomData) => {
+  room = roomData;
+  showGameBoard();
+  gameBoard = roomData.gameBoard;
+  console.log(gameBoard);
+  game();
+})
+
+
+
+
+/*
+ *
+ */
+
 var canvas = document.querySelector('#memo-board');
 var context = canvas.getContext('2d');
-var canvaSize = 800;
-var sectionSize = canvaSize / rows;
 
+var sectionSize = 150;
+var rows = 5;
+var columns = 8;
+var canvaHeight = rows * sectionSize;
+var canvaWidth = columns * sectionSize;
 
-function game(playerID) {
-  
-  const lineColor = "#ddd";
+//context.translate(0.5, 0.5);
+//context.imageSmoothingEnabled = true;
+
+var tiles = rows * columns;
+//var board = generateBoard();
+
+/*
+ *  ***** GAME *****
+ */
+
+function game (playerID) {
+  canvas.width = canvaWidth;
+  canvas.height = canvaHeight;  
+
   const ima = new Image();
-  ima.onload = () => {
-    context.drawImage(ima,0,0);
-  }
 
+  drawBlankTiles(2);
 
-  
-  
   console.log('game');
-  // canvas.width = canvaSize;
-  // canvas.height = canvaSize;
-
-  context.fillStyle = "#FF0000";
-  //drawLines(10, lineColor);
-
-  
-  // ima.addEventListener('load', () => {
-  //   context.drawImage(ima,0,0,250,250);
-
-  // });
-
-  
-  ima.src = './0.png';
-  
     
 }
 
-game();
-
-// function drawLines (lineWidth, strokeStyle) 
-// {
-//   var lineStart = 4;
-//   var lineLenght = canvaSize - 5;
-//   context.lineWidth = lineWidth;
-//   context.lineCap = 'round';
-//   context.strokeStyle = strokeStyle;
-//   context.beginPath();
 
 
-//   // Horizontal lines 
-//   for (var y = 1;y <= 2;y++) 
-//   {  
-//     context.moveTo(lineStart, y * sectionSize);
-//     context.lineTo(lineLenght, y * sectionSize);
-//   }
 
-//   // Vertical lines 
-//   for (var x = 1;x <= 2;x++) 
-//   {
-//     context.moveTo(x * sectionSize, lineStart);
-//     context.lineTo(x * sectionSize, lineLenght);
-//   }
+/*
+ *  ***** DRAW *****
+ */
 
-//   var img = new Image();
-//   //
-//     console.log('image loaded');
-//     context.drawImage(img, 0, 0);
-//   //}
-//   img.src = '0.png';
+function drawBlankTiles (fileNo) {
+  
+  const source = {
+    blank:  './blank/' + fileNo + '.png'
+  };
 
-//   context.stroke();
-// }
+  loadImages (source, (image) => {
+    for (let x = 0; x < columns; x++) {
+      for (let y = 0; y < rows; y++) {
+        context.drawImage(image.blank, x * sectionSize, y * sectionSize, sectionSize-4, sectionSize-4);
+      }
+    }
+  });
+}
+
+function drawTile (column, row, img) {
+  loadImages({tile: img}, (image) => {
+    context.drawImage(image.tile, column * sectionSize, row * sectionSize, sectionSize-4, sectionSize-4);
+  });
+}
+
+function reverseTile (mouse, board) 
+{
+  var xCordinate;
+  var yCordinate;
+
+  for (var x = 0; x < columns; x++) 
+  {
+    for (var y = 0; y < rows; y++) 
+    {
+      xCordinate = x * sectionSize;
+      yCordinate = y * sectionSize;
+
+      if (mouse.x >= xCordinate && mouse.x <= xCordinate + sectionSize &&
+          mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) 
+      {
+        console.log(`row: ${y}, column: ${x}`);
+        clearTile(x, y);
+
+        const source = '../assets/animals_c/' + board[x][y] + '.png';
+
+        drawTile(x, y, source);
+      }
+    }
+  }
+}
+
+function clearTile (column, row) {
+  context.beginPath();
+  context.rect( column*sectionSize, row*sectionSize, 
+                sectionSize, sectionSize);
+  context.fillStyle = "white"
+  context.fill();
+}
+
+
+/*
+ *  ***** LOAD IMAGES *****
+ */
+
+function loadImages (sources, callback) {
+  const images = {};
+  let loadedImages = 0;
+  let numImages = 0;
+
+  for (const src in sources) {
+    numImages++;
+  }
+  for (const src in sources) {
+    images[src] = new Image();
+    images[src].onload = () => {
+      if (++loadedImages >= numImages) {
+        callback(images);
+      }
+    };
+    images[src].onerror = (msg, url, lineNom, culumnNo, error) => {
+      console.log('cant load image: ' + msg);
+    }
+    images[src].src = sources[src];
+  }
+}
+
+
+/*
+ *  ***** CONTROLS ******
+ */
+
+// gets coordinates of mouse click
+function getCanvasMousePosition (event) {
+  var rect = canvas.getBoundingClientRect();
+
+  return {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  }
+}
+
+// on mouse button release event
+canvas.addEventListener ('mouseup', function (event) {
+  const canvasMousePosition = getCanvasMousePosition(event);
+  
+  socket.emit('reverse-tile', canvasMousePosition);
+  reverseTile(canvasMousePosition, gameBoard);
+});
+
