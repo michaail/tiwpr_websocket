@@ -95,8 +95,8 @@ socket.on('get-rooms', (rooms) => {
 
   for (i = 0; i < rooms.length; i++)
   {
-    var room = new Option(rooms[i].roomName, i);
-    sSelect.options.add(room);
+    var roomValue = new Option(rooms[i].roomName, i);
+    sSelect.options.add(roomValue);
   }
   //console.log(rooms);
 });
@@ -106,21 +106,22 @@ socket.on('get-rooms', (rooms) => {
  *  ***** GAME COMMUNICATION *****
  */
 
-socket.on('reverse-tile', (coordinates) => {
 
-});
 
 
 var gameBoard;
 var room;
 socket.on('game-board', (roomData) => {
-  room = roomData;
+  room = roomData.roomName;
   showGameBoard();
   gameBoard = roomData.gameBoard;
   console.log(gameBoard);
   game();
 })
 
+socket.on('reverse-tile', (mousePosition) => {
+  reverseTile(mousePosition);
+});
 
 
 
@@ -153,13 +154,11 @@ function game (playerID) {
 
   const ima = new Image();
 
-  drawBlankTiles(2);
+  drawBlankTiles(1);
 
   console.log('game');
     
 }
-
-
 
 
 /*
@@ -187,7 +186,7 @@ function drawTile (column, row, img) {
   });
 }
 
-function reverseTile (mouse, board) 
+function reverseTile (mouse) 
 {
   var xCordinate;
   var yCordinate;
@@ -205,7 +204,7 @@ function reverseTile (mouse, board)
         console.log(`row: ${y}, column: ${x}`);
         clearTile(x, y);
 
-        const source = '../assets/animals_c/' + board[x][y] + '.png';
+        const source = './animals_c/' + gameBoard[x][y] + '.png';
 
         drawTile(x, y, source);
       }
@@ -267,7 +266,7 @@ function getCanvasMousePosition (event) {
 canvas.addEventListener ('mouseup', function (event) {
   const canvasMousePosition = getCanvasMousePosition(event);
   
-  socket.emit('reverse-tile', canvasMousePosition);
-  reverseTile(canvasMousePosition, gameBoard);
+  socket.emit('reverse-tile', {canvasMousePosition, room});
+  //reverseTile(canvasMousePosition, gameBoard);
 });
 

@@ -39,7 +39,7 @@ io.on('connection', (socket) => {
       roomList.push(currRoom);
 
       socket.join(roomName);
-      io.in(roomName).emit('game-board', currRoom);
+      socket.emit('game-board', currRoom);
 
       console.log("Create:\t" + roomName);
     }
@@ -56,14 +56,14 @@ io.on('connection', (socket) => {
             
       socket.join(roomName);
       let currentRoom = {};
-      for (let room in roomList) {
-        if (roomList.roomName === roomName) {
-          currentRoom = room;
-          break;
+      for (let i = 0; i < roomList.length; i++) {
+        if (roomList[i].roomName === roomName) {
+          currentRoom = roomList[i];
         }
+        
       }
 
-      io.in(roomName).emit('game-board', currentRoom);
+      socket.emit('game-board', currentRoom);
 
       console.log("Join:\t" + roomName);
     }
@@ -100,8 +100,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('reverse-tile', (mousePosition, room) => {
-    io.in(room).emit('reverse-tile', )
+  socket.on('reverse-tile', (recvObj) => {
+    console.log(`room: ${recvObj.room} | mouse: ${recvObj.canvasMousePosition}`);
+    io.to(recvObj.room).emit('reverse-tile', recvObj.canvasMousePosition);
   });
 
 
