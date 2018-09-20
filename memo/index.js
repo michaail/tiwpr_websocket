@@ -111,6 +111,9 @@ socket.on('get-rooms', (rooms) => {
 
 var gameBoard;
 var room;
+var uncoveredTile = -1;
+var uncoveredTileCoordinates = {column: -1, row: -1};
+
 socket.on('game-board', (roomData) => {
   room = roomData.roomName;
   showGameBoard();
@@ -119,8 +122,8 @@ socket.on('game-board', (roomData) => {
   game();
 })
 
-socket.on('reverse-tile', (mousePosition) => {
-  reverseTile(mousePosition);
+socket.on('reverse-tile', (coordinates) => {
+  reverseTile(coordinates.column, coordinates.row);
 });
 
 
@@ -171,7 +174,7 @@ function drawBlankTiles (fileNo) {
     blank:  './blank/' + fileNo + '.png'
   };
 
-  loadImages (source, (image) => {
+  loadImages (source, (image)  => {
     for (let x = 0; x < columns; x++) {
       for (let y = 0; y < rows; y++) {
         context.drawImage(image.blank, x * sectionSize, y * sectionSize, sectionSize-4, sectionSize-4);
@@ -186,27 +189,74 @@ function drawTile (column, row, img) {
   });
 }
 
-function reverseTile (mouse) 
+function reverseTile (column, row) 
 {
-  var xCordinate;
-  var yCordinate;
+//   var xCordinate;
+//   var yCordinate;
 
-  for (var x = 0; x < columns; x++) 
+//   for (var x = 0; x < columns; x++) 
+//   {
+//     for (var y = 0; y < rows; y++) 
+//     {
+//       xCordinate = x * sectionSize;
+//       yCordinate = y * sectionSize;
+
+//       if (mouse.x >= xCordinate && mouse.x <= xCordinate + sectionSize &&
+//           mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) 
+//       {
+  console.log(`column: ${column}, row: ${row}`);
+  clearTile(column, row);
+  const source = './animals_c/' + gameBoard[column][row] + '.png';
+  const blankSource = './blank/1.png'
+  
+  drawTile(column, row, source);
+  if (uncoveredTile == -1 ) {
+    uncoveredTile = gameBoard[column][row];
+    uncoveredTileCoordinates = {column, row};
+  } else {
+    if (uncoveredTile == gameBoard[column][row]) {
+      gameBoard[column][row] = -1;
+      gameBoard[uncoveredTileCoordinates.column][uncoveredTileCoordinates.row] = -1;
+      console.log(gameBoard);
+      console.log('well done!');
+      setTimeout(() => {
+        clearTile(column, row);
+        clearTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row);
+        uncoveredTile = -1;
+        uncoveredTileCoordinates = {column: -1, row: -1};
+      }, 3000);
+      
+    } else {
+      setTimeout(() => {
+        drawTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row, blankSource);
+        drawTile(column, row, blankSource);
+        uncoveredTile = -1;
+        uncoveredTileCoordinates = {column: -1, row: -1};
+      }, 3000);
+      
+      console.log('try again');
+    }
+  }
+    //   }
+    // }
+  // }
+}
+
+function getCoordinates (mouse) {
+  let xCordinate;
+  let yCordinate;
+  for (let x = 0; x < columns; x++) 
   {
-    for (var y = 0; y < rows; y++) 
+    for (let y = 0; y < rows; y++) 
     {
       xCordinate = x * sectionSize;
       yCordinate = y * sectionSize;
-
       if (mouse.x >= xCordinate && mouse.x <= xCordinate + sectionSize &&
-          mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) 
-      {
-        console.log(`row: ${y}, column: ${x}`);
-        clearTile(x, y);
-
-        const source = './animals_c/' + gameBoard[x][y] + '.png';
-
-        drawTile(x, y, source);
+          mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) {
+        return {
+          column: x,
+          row:    y
+        }
       }
     }
   }
@@ -265,8 +315,18 @@ function getCanvasMousePosition (event) {
 // on mouse button release event
 canvas.addEventListener ('mouseup', function (event) {
   const canvasMousePosition = getCanvasMousePosition(event);
+  const coordinates = getCoordinates(canvasMousePosition);
   
-  socket.emit('reverse-tile', {canvasMousePosition, room});
-  //reverseTile(canvasMousePosition, gameBoard);
+  if (gameBoard[coordinates.column][coordinates.row] !== ' ' || 
+      (coordinates.column === uncoveredTileCoordinates.column &&
+        coordinates.row === uncoveredTileCoordinates.row )) {
+
+    socket.emit('reverse-tile', { coordinates, room });
+  } else {
+    // ruch nieodnotowany
+  }
+
 });
+
+
 

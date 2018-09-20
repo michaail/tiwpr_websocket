@@ -101,8 +101,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('reverse-tile', (recvObj) => {
-    console.log(`room: ${recvObj.room} | mouse: ${recvObj.canvasMousePosition}`);
-    io.to(recvObj.room).emit('reverse-tile', recvObj.canvasMousePosition);
+    console.log(`room: ${recvObj.room} | mouse: ${recvObj.coordinates.column} ${recvObj.coordinates.row}`);
+    io.to(recvObj.room).emit('reverse-tile', recvObj.coordinates);
   });
 
 
