@@ -2,6 +2,7 @@
 console.log("Uruchomiony home.js");
 
 var socket = io();
+var player;
 
 socket.on('err', (errMsg) => {
   console.log(errMsg);
@@ -25,13 +26,16 @@ function showGameBoard()
   gameContainer.style.display = "block";
 }
 
+const turnInfo = document.getElementById('move-info');
+//const player
+//moveInfo.textContent = 'dupa';
 // Create room button event listener
 const bCreate = document.getElementById('create');
 bCreate.addEventListener('click', function(e) {
   var createValue = document.getElementById('create-value').value;
-    
+  player = 1;
   socket.emit('create-room', createValue);
-      
+  
   console.log('create button clicked ' + createValue);
   checkRoomList();
 });
@@ -41,11 +45,9 @@ const bJoin = document.getElementById('join');
 bJoin.addEventListener('click', function(e) {
   //var selectedVal = document.getElementById('join-value');
   var t = sSelect.options[ sSelect.selectedIndex ].text;
-    
+  player = 2;
   socket.emit('join-room', t);
     
-  // game(2);
-
   console.log('join button clicked ' + t);
     
   checkRoomList();
@@ -113,12 +115,13 @@ var uncoveredTileCoordinates = {column: -1, row: -1};
 var areBothUncovered = false;
 var gameState;
 var playersPts;
-gameState.gameBoard = gameBoard;
+
 
 socket.on('game-board', (roomData) => {
   room = roomData.roomName;
   showGameBoard();
   gameBoard = roomData.gameBoard;
+  gameState = {gameBoard};
   console.log(gameBoard);
   game();
 })
@@ -152,7 +155,7 @@ var tiles = rows * columns;
  *  ***** GAME *****
  */
 
-function game (playerID) {
+function game () {
   canvas.width = canvaWidth;
   canvas.height = canvaHeight;  
 
@@ -178,7 +181,11 @@ function drawBlankTiles (fileNo) {
   loadImages (source, (image)  => {
     for (let x = 0; x < columns; x++) {
       for (let y = 0; y < rows; y++) {
-        context.drawImage(image.blank, x * sectionSize, y * sectionSize, sectionSize-4, sectionSize-4);
+        if (gameBoard[x][y] === -1) {
+          clearTile(x, y);
+        } else {
+          context.drawImage(image.blank, x * sectionSize, y * sectionSize, sectionSize-4, sectionSize-4);
+        }  
       }
     }
   });
