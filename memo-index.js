@@ -105,6 +105,10 @@ io.on('connection', (socket) => {
     io.to(recvObj.room).emit('reverse-tile', recvObj.coordinates);
   });
 
+  socket.on('pass-turn', (recvObj) => {
+    io.to(recvObj.room).emit('pass-turn', recvObj.gameState);
+  });
+
 
 
 });

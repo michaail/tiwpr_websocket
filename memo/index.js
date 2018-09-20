@@ -7,10 +7,6 @@ socket.on('err', (errMsg) => {
   console.log(errMsg);
 });
 
-// socket.on('news', (data) => {
-//     console.log(data);
-// });
-
 // update list of rooms
 function checkRoomList() {
   socket.emit('get-rooms', ""); 
@@ -102,17 +98,22 @@ socket.on('get-rooms', (rooms) => {
 });
 
 
+// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+
 /*
  *  ***** GAME COMMUNICATION *****
  */
-
-
-
 
 var gameBoard;
 var room;
 var uncoveredTile = -1;
 var uncoveredTileCoordinates = {column: -1, row: -1};
+var areBothUncovered = false;
+var gameState;
+var playersPts;
+gameState.gameBoard = gameBoard;
 
 socket.on('game-board', (roomData) => {
   room = roomData.roomName;
@@ -191,19 +192,6 @@ function drawTile (column, row, img) {
 
 function reverseTile (column, row) 
 {
-//   var xCordinate;
-//   var yCordinate;
-
-//   for (var x = 0; x < columns; x++) 
-//   {
-//     for (var y = 0; y < rows; y++) 
-//     {
-//       xCordinate = x * sectionSize;
-//       yCordinate = y * sectionSize;
-
-//       if (mouse.x >= xCordinate && mouse.x <= xCordinate + sectionSize &&
-//           mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) 
-//       {
   console.log(`column: ${column}, row: ${row}`);
   clearTile(column, row);
   const source = './animals_c/' + gameBoard[column][row] + '.png';
@@ -213,8 +201,10 @@ function reverseTile (column, row)
   if (uncoveredTile == -1 ) {
     uncoveredTile = gameBoard[column][row];
     uncoveredTileCoordinates = {column, row};
-  } else {
-    if (uncoveredTile == gameBoard[column][row]) {
+  } else {  // when 2 are uncovered
+    areBothUncovered = true;
+    
+    if (uncoveredTile == gameBoard[column][row]) {  // if 2 match
       gameBoard[column][row] = -1;
       gameBoard[uncoveredTileCoordinates.column][uncoveredTileCoordinates.row] = -1;
       console.log(gameBoard);
@@ -224,22 +214,24 @@ function reverseTile (column, row)
         clearTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row);
         uncoveredTile = -1;
         uncoveredTileCoordinates = {column: -1, row: -1};
+        areBothUncovered = false;
       }, 3000);
+      // score point & transfer gamestate & new try
       
-    } else {
+    } else { 
       setTimeout(() => {
         drawTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row, blankSource);
         drawTile(column, row, blankSource);
         uncoveredTile = -1;
         uncoveredTileCoordinates = {column: -1, row: -1};
+        areBothUncovered = false;
       }, 3000);
-      
+      // pass the turn and game state
+
       console.log('try again');
+
     }
   }
-    //   }
-    // }
-  // }
 }
 
 function getCoordinates (mouse) {
@@ -257,6 +249,7 @@ function getCoordinates (mouse) {
           column: x,
           row:    y
         }
+
       }
     }
   }
@@ -317,13 +310,16 @@ canvas.addEventListener ('mouseup', function (event) {
   const canvasMousePosition = getCanvasMousePosition(event);
   const coordinates = getCoordinates(canvasMousePosition);
   
+  if (areBothUncovered) {
+    return;
+  }
   if (gameBoard[coordinates.column][coordinates.row] !== ' ' || 
       (coordinates.column === uncoveredTileCoordinates.column &&
-        coordinates.row === uncoveredTileCoordinates.row )) {
+        coordinates.row === uncoveredTileCoordinates.row)) {
 
     socket.emit('reverse-tile', { coordinates, room });
   } else {
-    // ruch nieodnotowany
+    return;
   }
 
 });
