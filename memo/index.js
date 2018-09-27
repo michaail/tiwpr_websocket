@@ -271,7 +271,13 @@ function hasGameEnded() {
 }
 
 function gameEndedHandler() {
-  
+  if (room.gameState.players[userName] > 5) {
+    alert("Wygrana!");
+  } else if (room.gameState.players[userName] == 5) {
+    alert("remis");
+  } else {
+    alert("Porażka");
+  }
 }
 
 
@@ -319,6 +325,9 @@ function ifTwoMatch (column, row) {
       console.log(room.gameState.players);
       emitGameState();
     }
+    // if (hasGameEnded) {
+    //   gameEndedHandler();
+    // }
     uncoveredTileCoordinates = {column: -1, row: -1};
     areBothUncovered = false;
   }, 2000);
