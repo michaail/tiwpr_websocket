@@ -1,34 +1,39 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Rysownik</title>
+    <title>Memo</title>
     <meta charset="utf-8">
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="../game/game.css">
+    
       
   </head>
   <body>
 
   <div id="room-controls">
-    <h1>Pokoje</h1>
+    <h1>Memo-game</h1>
+    <form class="form-horizontal">
+      <div class="form-group">
+        
+        <input class="col-sm-2" type="text" id="player-value">
+        <p style="margin-top: 5px" class="col-sm-4">Nazwa użytkownika</p>
+      </div>
+    </form>
+    
+    <div style="margin-bottom: 5px">
+      <h3>Pokój</h3>
+      <input type="text" id="create-value">
+      <button id="create" class="btn btn-primary btn-space">Utwórz</button>
+    </div>
 
     <div>
       
-      <input type="text" id="player-value">
-      <p>Nazwa użytkownika</p>
-    </div>
-
-    <div>
-      <input type="text" id="create-value">
-      <button id="create">Utwórz</button>
-    </div>
-
-    <div>
       <select id="join-value"></select>
         
-      <button id="join">Dołącz</button>
-      <button id="update">Aktualizuj</button>
-      <button id="delete">Usuń</button>
+      <button id="join"   class="btn btn-success btn-space">Dołącz</button>
+      <button id="update" class="btn btn-secondary btn-space">Aktualizuj</button>
+      <button id="delete" class="btn btn-danger btn-space">Usuń</button>
         
     </div>
         

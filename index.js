@@ -18,8 +18,6 @@ function isRoomCreated(rooms, name) {
 }
 
 
-
-
 var users = [];
 var roomList = [];
 var createdRooms = [];

@@ -1,7 +1,6 @@
 // import Room from "game"
 //todo game ended handler
 //todo wait for other player to start
-//todo binary data?
 //var Buffer = require('buffer/').Buffer
 console.log("Uruchomiony home.js");
 
@@ -11,13 +10,14 @@ var gameStarted = false;
 var myTurn = false;
 
 socket.on('err', (errMsg) => {
+  alert("pokój o tej nazwie już istnieje");
   console.log(errMsg);
 });
 
 // update list of rooms
 function checkRoomList() {
   socket.emit('get-rooms', ""); 
-
+  
 }
 checkRoomList();
 
@@ -122,6 +122,7 @@ socket.on('get-rooms', (rooms) => {
  */
 
 
+
 var room;
 var uncoveredTile = -1;
 var uncoveredTileCoordinates = {column: -1, row: -1};
@@ -167,6 +168,7 @@ socket.on('room-joined', roomData => {
                     users[1] + " - " + room.gameState.players[users[1]];
   
   }
+  gameStarted = true;
   gameInfo.textContent = gameInfoText;
   game();
 });
@@ -207,6 +209,10 @@ socket.on('get-game-state', gameStateData => {
     gameInfoText = "Wynik: " + users[0] + " - " + room.gameState.players[users[0]] + " | " +
                     users[1] + " - " + room.gameState.players[users[1]];
   
+  }
+
+  if (!gameStarted) {
+    gameStarted = true;
   }
   gameInfo.textContent = gameInfoText;
 });
@@ -252,6 +258,21 @@ function emitGameState () {
   socket.emit('game-state', room);
 }
 
+function hasGameEnded() {
+  let result = true;
+  for (let x = 0; x < columns; x++) {
+    for (let y = 0; y < rows; y++) {
+      if (room.gameState.gameBoard[x][y] !== -1) {
+        result = false;
+      }
+    }
+  }
+  return result;
+}
+
+function gameEndedHandler() {
+  
+}
 
 
 /*
@@ -431,24 +452,27 @@ function getCanvasMousePosition (event) {
 
 // on mouse button release event
 canvas.addEventListener ('mouseup', function (event) {
-  if (myTurn)
-  {
-    const canvasMousePosition = getCanvasMousePosition(event);
-    const coordinates = getCoordinates(canvasMousePosition);
+  if (gameStarted) {
   
-    if (areBothUncovered) {
-      return;
-    }
-    if (room.gameState.gameBoard[coordinates.column][coordinates.row] !== -1 && 
-        !(coordinates.column === uncoveredTileCoordinates.column &&
-          coordinates.row === uncoveredTileCoordinates.row)) {
+    if (myTurn)
+    {
+      const canvasMousePosition = getCanvasMousePosition(event);
+      const coordinates = getCoordinates(canvasMousePosition);
+  
+      if (areBothUncovered) {
+        return;
+      }
+      if (room.gameState.gameBoard[coordinates.column][coordinates.row] !== -1 && 
+          !(coordinates.column === uncoveredTileCoordinates.column &&
+            coordinates.row === uncoveredTileCoordinates.row)) {
 
-      socket.emit('reverse-tile', { coordinates, roomName: room.roomName });
+        socket.emit('reverse-tile', { coordinates, roomName: room.roomName });
+      } else {
+        return;
+      }
     } else {
-      return;
+      console.log('wait for your turn');
     }
-  } else {
-    console.log('wait for your turn');
   }
 });
 
