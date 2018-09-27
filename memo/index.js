@@ -1,8 +1,14 @@
 // import Room from "game"
+//todo game ended handler
+//todo wait for other player to start
+//todo binary data?
+//var Buffer = require('buffer/').Buffer
 console.log("Uruchomiony home.js");
 
 var socket = io();
 var player;
+var gameStarted = false;
+var myTurn = false;
 
 socket.on('err', (errMsg) => {
   console.log(errMsg);
@@ -15,9 +21,22 @@ function checkRoomList() {
 }
 checkRoomList();
 
-const controls = document.getElementById('room-controls');
+const controls      = document.getElementById('room-controls');
 const gameContainer = document.getElementById('game-board');
 
+const playerValue   = document.getElementById('player-value');
+const createValue   = document.getElementById('create-value')
+const createButton  = document.getElementById('create');
+const selectBox     = document.getElementById('join-value');
+const joinButton    = document.getElementById('join');
+const updateButton  = document.getElementById('update');
+const deleteButton  = document.getElementById('delete');
+
+const turnInfo      = document.getElementById('move-info');
+const gameInfo      = document.getElementById('game-info');
+const userInfo      = document.getElementById('user-info');
+
+var userName;
 gameContainer.style.display = "none";
 
 function showGameBoard()
@@ -26,38 +45,41 @@ function showGameBoard()
   gameContainer.style.display = "block";
 }
 
-const turnInfo = document.getElementById('move-info');
-//const player
-//moveInfo.textContent = 'dupa';
-// Create room button event listener
-const bCreate = document.getElementById('create');
-bCreate.addEventListener('click', function(e) {
-  var createValue = document.getElementById('create-value').value;
-  player = 1;
-  socket.emit('create-room', createValue);
-  
-  console.log('create button clicked ' + createValue);
+
+
+createButton.addEventListener('click', function(e) {
+  let roomName = createValue.value;
+  userName = playerValue.value;
+  userInfo.textContent = userName;
+  //player = 1;
+  let obj = {roomName, userName};
+  //let bTmp = Buffer.from(JSON.stringify(obj));
+  //console.log(bTmp);
+
+  //socket.emit('create-room', bTmp);
+  socket.emit('create-room', obj);
+  turnInfo.textContent = 'twój ruch!';
+  console.log('create button clicked ' + roomName + " " + userName);
   checkRoomList();
 });
 
 // Join room button event listener
-const bJoin = document.getElementById('join');
-bJoin.addEventListener('click', function(e) {
-  //var selectedVal = document.getElementById('join-value');
-  var t = sSelect.options[ sSelect.selectedIndex ].text;
-  player = 2;
-  socket.emit('join-room', t);
+
+joinButton.addEventListener('click', function(e) {
+  let roomName = selectBox.options[ selectBox.selectedIndex ].text;
+  userName = playerValue.value;
+  userInfo.textContent = userName;
+  //player = 2;
+  socket.emit('join-room', {roomName, userName});
     
-  console.log('join button clicked ' + t);
-    
+  console.log('join button clicked ' + roomName + " " + userName);
+  turnInfo.textContent = 'czekaj na swój ruch...';
   checkRoomList();
 });
 
 // Delete room button event listener
-const bDelete = document.getElementById('delete');
-bDelete.addEventListener('click', function(e) {
-  //var selectedVal = document.getElementById('join-value');
-  var t = sSelect.options[ sSelect.selectedIndex ].text;
+deleteButton.addEventListener('click', function(e) {
+  var t = selectBox.options[ selectBox.selectedIndex ].text;
     
   socket.emit('delete-room', t);
     
@@ -65,19 +87,11 @@ bDelete.addEventListener('click', function(e) {
   checkRoomList();
 });
 
-// Delete room button event listener
-const bUpdate = document.getElementById('update');
-bUpdate.addEventListener('click', function(e) {
-    
+// Update room list button event listener
+updateButton.addEventListener('click', function(e) {
   checkRoomList();
 });
 
-// Drop-down rooms list event listener
-const sSelect = document.getElementById('join-value');
-sSelect.addEventListener('click', function(e) {
-    //checkRoomList();
-     
-});
 
 
 /*
@@ -86,17 +100,16 @@ sSelect.addEventListener('click', function(e) {
 
 // Get room-list from server
 socket.on('get-rooms', (rooms) => {
-  for (var i = sSelect.options.length -1; i >= 0; i--)
+  for (var i = selectBox.options.length -1; i >= 0; i--)
   {
-    sSelect.remove(i);
+    selectBox.remove(i);
   }
 
   for (i = 0; i < rooms.length; i++)
   {
     var roomValue = new Option(rooms[i].roomName, i);
-    sSelect.options.add(roomValue);
+    selectBox.options.add(roomValue);
   }
-  //console.log(rooms);
 });
 
 
@@ -108,28 +121,99 @@ socket.on('get-rooms', (rooms) => {
  *  ***** GAME COMMUNICATION *****
  */
 
-var gameBoard;
+
 var room;
 var uncoveredTile = -1;
 var uncoveredTileCoordinates = {column: -1, row: -1};
 var areBothUncovered = false;
 var gameState;
 var playersPts;
+//var roomName;
 
-
-socket.on('game-board', (roomData) => {
-  room = roomData.roomName;
+socket.on('room-created', roomData => {
+  room = roomData;
   showGameBoard();
-  gameBoard = roomData.gameBoard;
-  gameState = {gameBoard};
-  console.log(gameBoard);
-  game();
-})
 
-socket.on('reverse-tile', (coordinates) => {
+  player = roomData.playersCount;
+  console.log(room.gameState.gameBoard);
+  myTurn = true;
+  console.log(player);
+  let gameInfoText;
+  let users = Object.keys(room.gameState.players)
+  if (users.length < 2) {
+    gameInfoText = "Czekaj na drugiego gracza";
+  } else {
+    gameInfoText = "Wynik: " + users[0] + " - " + room.gameState.players[users[0]] + " | " +
+                    users[1] + " - " + room.gameState.players[users[1]];
+  
+  }
+  gameInfo.textContent = gameInfoText;
+  game();
+});
+
+socket.on('room-joined', roomData => {
+  room = roomData;
+  showGameBoard();
+
+  player = roomData.playersCount;
+  console.log(room.gameState.gameBoard);
+  console.log(player);
+  let users = Object.keys(room.gameState.players)
+  let gameInfoText;
+  if (users.length < 2) {
+    gameInfoText = "Czekaj na drugiego gracza";
+  } else {
+    gameInfoText = "Wynik: " + users[0] + " - " + room.gameState.players[users[0]] + " | " +
+                    users[1] + " - " + room.gameState.players[users[1]];
+  
+  }
+  gameInfo.textContent = gameInfoText;
+  game();
+});
+
+
+socket.on('reverse-tile', coordinates => {
   reverseTile(coordinates.column, coordinates.row);
 });
 
+socket.on('get-turn', roomData => {
+  room = roomData
+
+  console.log('turn passed');
+  if (player == roomData.gameState.whoseTurn) {
+    turnInfo.textContent = 'twój ruch!';
+    myTurn = true;
+    console.log('my turn');
+  }
+  let users = Object.keys(room.gameState.players)
+  let gameInfoText;
+  if (users.length < 2) {
+    gameInfoText = "Czekaj na drugiego gracza";
+  } else {
+    gameInfoText = "Wynik: " + users[0] + " - " + room.gameState.players[users[0]] + " | " +
+                    users[1] + " - " + room.gameState.players[users[1]];
+  
+  }
+  gameInfo.textContent = gameInfoText;
+});
+
+socket.on('get-game-state', gameStateData => {
+  room.gameState = gameStateData;
+  let users = Object.keys(room.gameState.players)
+  let gameInfoText;
+  if (users.length < 2) {
+    gameInfoText = "Czekaj na drugiego gracza";
+  } else {
+    gameInfoText = "Wynik: " + users[0] + " - " + room.gameState.players[users[0]] + " | " +
+                    users[1] + " - " + room.gameState.players[users[1]];
+  
+  }
+  gameInfo.textContent = gameInfoText;
+});
+
+socket.on('get-new-game', roomData => {
+  room = roomData;
+})
 
 
 /*
@@ -140,13 +224,11 @@ var canvas = document.querySelector('#memo-board');
 var context = canvas.getContext('2d');
 
 var sectionSize = 150;
-var rows = 5;
-var columns = 8;
+var rows = 4;
+var columns = 5;
 var canvaHeight = rows * sectionSize;
 var canvaWidth = columns * sectionSize;
 
-//context.translate(0.5, 0.5);
-//context.imageSmoothingEnabled = true;
 
 var tiles = rows * columns;
 //var board = generateBoard();
@@ -163,9 +245,13 @@ function game () {
 
   drawBlankTiles(1);
 
-  console.log('game');
-    
+  console.log('game');   
 }
+
+function emitGameState () {
+  socket.emit('game-state', room);
+}
+
 
 
 /*
@@ -181,7 +267,7 @@ function drawBlankTiles (fileNo) {
   loadImages (source, (image)  => {
     for (let x = 0; x < columns; x++) {
       for (let y = 0; y < rows; y++) {
-        if (gameBoard[x][y] === -1) {
+        if (room.gameState.gameBoard[x][y] === -1) {
           clearTile(x, y);
         } else {
           context.drawImage(image.blank, x * sectionSize, y * sectionSize, sectionSize-4, sectionSize-4);
@@ -193,49 +279,79 @@ function drawBlankTiles (fileNo) {
 
 function drawTile (column, row, img) {
   loadImages({tile: img}, (image) => {
-    context.drawImage(image.tile, column * sectionSize, row * sectionSize, sectionSize-4, sectionSize-4);
+    context.drawImage(image.tile, column * sectionSize, row * sectionSize, 
+                      sectionSize-4, sectionSize-4);
   });
 }
+
+function ifTwoMatch (column, row) {
+  room.gameState.gameBoard[column][row] = -1;
+  room.gameState.gameBoard[uncoveredTileCoordinates.column][uncoveredTileCoordinates.row] = -1;
+  console.log(room.gameState.gameBoard);
+  console.log('well done!');
+  setTimeout(() => {
+    clearTile(column, row);
+    clearTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row);
+    uncoveredTile = -1;
+    if (myTurn) {
+      room.gameState.players[userName]++;
+      console.log(room.gameState.players);
+      emitGameState();
+    }
+    uncoveredTileCoordinates = {column: -1, row: -1};
+    areBothUncovered = false;
+  }, 2000);
+  // todo game score
+}
+
+function ifTwoDontMatch (column, row) {
+  setTimeout(() => {
+    drawTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row, blankSource);
+    drawTile(column, row, blankSource);
+    uncoveredTile = -1;
+    uncoveredTileCoordinates = {column: -1, row: -1};
+    areBothUncovered = false;
+    
+    if (myTurn) {
+      if (player == 1) {
+        room.gameState.whoseTurn = 2;
+      } else {
+        room.gameState.whoseTurn = 1;
+      }
+
+      myTurn = false;
+      socket.emit('pass-turn', room);
+      turnInfo.textContent = 'czekaj na swój ruch...';
+      
+    }
+  }, 2000);
+
+  console.log('try again');
+}
+
+
+var blankSource = './blank/1.png'
 
 function reverseTile (column, row) 
 {
   console.log(`column: ${column}, row: ${row}`);
   clearTile(column, row);
-  const source = './animals_c/' + gameBoard[column][row] + '.png';
-  const blankSource = './blank/1.png'
+  const source = './animals_c/' + room.gameState.gameBoard[column][row] + '.png';
+  
   
   drawTile(column, row, source);
   if (uncoveredTile == -1 ) {
-    uncoveredTile = gameBoard[column][row];
+    uncoveredTile = room.gameState.gameBoard[column][row];
     uncoveredTileCoordinates = {column, row};
-  } else {  // when 2 are uncovered
+
+  } else {
     areBothUncovered = true;
     
-    if (uncoveredTile == gameBoard[column][row]) {  // if 2 match
-      gameBoard[column][row] = -1;
-      gameBoard[uncoveredTileCoordinates.column][uncoveredTileCoordinates.row] = -1;
-      console.log(gameBoard);
-      console.log('well done!');
-      setTimeout(() => {
-        clearTile(column, row);
-        clearTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row);
-        uncoveredTile = -1;
-        uncoveredTileCoordinates = {column: -1, row: -1};
-        areBothUncovered = false;
-      }, 3000);
-      // score point & transfer gamestate & new try
+    if (uncoveredTile == room.gameState.gameBoard[column][row]) {
+      ifTwoMatch(column, row)
       
     } else { 
-      setTimeout(() => {
-        drawTile(uncoveredTileCoordinates.column, uncoveredTileCoordinates.row, blankSource);
-        drawTile(column, row, blankSource);
-        uncoveredTile = -1;
-        uncoveredTileCoordinates = {column: -1, row: -1};
-        areBothUncovered = false;
-      }, 3000);
-      // pass the turn and game state
-
-      console.log('try again');
+      ifTwoDontMatch(column, row);
 
     }
   }
@@ -256,12 +372,13 @@ function getCoordinates (mouse) {
           column: x,
           row:    y
         }
-
       }
     }
   }
 }
 
+
+// draws blank rectangle instead of tiles
 function clearTile (column, row) {
   context.beginPath();
   context.rect( column*sectionSize, row*sectionSize, 
@@ -314,21 +431,25 @@ function getCanvasMousePosition (event) {
 
 // on mouse button release event
 canvas.addEventListener ('mouseup', function (event) {
-  const canvasMousePosition = getCanvasMousePosition(event);
-  const coordinates = getCoordinates(canvasMousePosition);
+  if (myTurn)
+  {
+    const canvasMousePosition = getCanvasMousePosition(event);
+    const coordinates = getCoordinates(canvasMousePosition);
   
-  if (areBothUncovered) {
-    return;
-  }
-  if (gameBoard[coordinates.column][coordinates.row] !== ' ' || 
-      (coordinates.column === uncoveredTileCoordinates.column &&
-        coordinates.row === uncoveredTileCoordinates.row)) {
+    if (areBothUncovered) {
+      return;
+    }
+    if (room.gameState.gameBoard[coordinates.column][coordinates.row] !== -1 && 
+        !(coordinates.column === uncoveredTileCoordinates.column &&
+          coordinates.row === uncoveredTileCoordinates.row)) {
 
-    socket.emit('reverse-tile', { coordinates, room });
+      socket.emit('reverse-tile', { coordinates, roomName: room.roomName });
+    } else {
+      return;
+    }
   } else {
-    return;
+    console.log('wait for your turn');
   }
-
 });
 
 
